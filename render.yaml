@@ -4,12 +4,10 @@ services:
     env: node
     plan: free
     region: frankfurt
-    buildCommand: npm install && npm run build
-    startCommand: node scripts/start-render.js
+    buildCommand: node -v
+    startCommand: node scripts/render-server.js
     healthCheckPath: /api/bot
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: TELEGRAM_BOT_TOKEN
         value: 8870306435:AAHtmuo8X4kjUcWdLCKriZj-8nGQjbGG6BE
       - key: NEXT_PUBLIC_SHOP_NAME

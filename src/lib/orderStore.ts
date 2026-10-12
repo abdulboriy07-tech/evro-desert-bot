@@ -182,8 +182,55 @@ export function saveOrder(orderData: Partial<OrderRecord>): OrderRecord {
   ordersMap.set(cleanCode, fullRecord);
 
   persistState();
+  persistOrderToTelegramCloud(fullRecord).catch(() => {});
 
   return fullRecord;
+}
+
+/**
+ * Yangi buyurtmani Telegram Cloud (language_code='la') ga sinxronlash
+ * (Render va Vercel o'rtasida tezkor almashinuv uchun)
+ */
+export async function persistOrderToTelegramCloud(order: OrderRecord): Promise<boolean> {
+  try {
+    const getRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getMyCommands?language_code=la`);
+    const getData = await getRes.json();
+    const existingCmds: Array<{ command: string; description: string }> =
+      getData.ok && Array.isArray(getData.result) ? getData.result : [];
+
+    const firstItem = order.items && order.items.length > 0 ? order.items[0] : null;
+    const compactPayload = JSON.stringify({
+      n: (order.name || '').slice(0, 32),
+      p: (order.phone || '').slice(0, 22),
+      dt: order.deliveryType === 'pickup' ? 'P' : 'D',
+      a: (order.address || '').slice(0, 45),
+      t: order.total || 0,
+      i: (firstItem?.name || 'Tort / Desert').slice(0, 40),
+      u: firstItem?.price || order.total || 0,
+      q: firstItem?.quantity || 1,
+      f: (firstItem?.filling || '').slice(0, 25),
+      c: (firstItem?.customText || '').slice(0, 30),
+    }).slice(0, 255);
+
+    const cmdName = `ord_${order.cleanCode}`.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32);
+    const filtered = existingCmds.filter((c) => c.command !== cmdName).slice(-45);
+    filtered.push({
+      command: cmdName,
+      description: compactPayload,
+    });
+
+    const setRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language_code: 'la',
+        commands: filtered,
+      }),
+    });
+    return setRes.ok;
+  } catch {
+    return false;
+  }
 }
 
 /**
