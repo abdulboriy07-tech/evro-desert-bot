@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: evro-desert-bot
+    env: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build
+    startCommand: node scripts/start-render.js
+    healthCheckPath: /api/bot
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8870306435:AAHtmuo8X4kjUcWdLCKriZj-8nGQjbGG6BE
+      - key: NEXT_PUBLIC_SHOP_NAME
+        value: EVRO DESERT
+      - key: NEXT_PUBLIC_SHOP_PHONE
+        value: "+998903605903"
+      - key: NEXT_PUBLIC_SHOP_TELEGRAM
+        value: evro_desert86bot
+      - key: ADMIN_PIN
+        value: "8686"
+      - key: NEXTAUTH_SECRET
+        value: evro-desert-secret-key-123456
+      - key: NEXTAUTH_URL
+        value: https://evro-desert-bot.onrender.com

@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-serif-luxury: 'Playfair Display', Georgia, serif;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #FAF8F5;
+  color: #2D2424;
+}
+
+.font-luxury {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-curve {
+  font-family: "Cedarville Cursive", cursive;
+}
+
+.font-script {
+  font-family: "Great Vibes", cursive;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F5EFEB;
+}
+::-webkit-scrollbar-thumb {
+  background: #E5B299;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C97A63;
+}
+
+/* Hide scrollbar for Chrome, Safari, Firefox */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@layer base {
+  :root {
+    --background: 35 40% 98%;
+    --foreground: 20 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 20% 15%;
+
+    --primary: 350 75% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 30% 94%;
+    --secondary-foreground: 20 20% 15%;
+
+    --muted: 30 20% 93%;
+    --muted-foreground: 20 10% 45%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 20 20% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 20% 88%;
+    --input: 30 20% 88%;
+    --ring: 350 75% 55%;
+
+    --radius: 0.75rem;
+  }
+}
