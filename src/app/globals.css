@@ -8,10 +8,36 @@
   --font-serif-luxury: 'Playfair Display', Georgia, serif;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background-color: #FAF8F5;
   color: #2D2424;
+  overflow-x: hidden;
+}
+
+/* Prevent iOS Safari & Telegram in-app browser from auto-zooming on input focus */
+@media screen and (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile safe-area bottom padding utility */
+.safe-area-pb {
+  padding-bottom: calc(0.375rem + env(safe-area-inset-bottom, 0px));
+}
+
+.safe-modal-pb {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
 .font-luxury {

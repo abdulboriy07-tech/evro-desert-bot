@@ -618,10 +618,10 @@ async function handleBotUpdate(update) {
         `💳 <b>EVRO DESERT — To'lov ma'lumotlari:</b>\n\n` +
         `🆔 <b>Buyurtma kodi:</b> <code>${displayCode}</code>\n` +
         totalLine +
-        `💳 <b>Karta raqami:</b>\n<code>${CARD_NUMBER}</code>\n` +
-        `<i>(Nusxalash uchun karta raqami ustiga bosing)</i>\n\n` +
+        `💳 <b>Karta raqami (ustiga bosib nusxalang):</b>\n<code>${CARD_NUMBER.replace(/\s+/g, '')}</code>\n` +
+        `<i>(${CARD_NUMBER})</i>\n\n` +
         `👤 <b>Karta egasi:</b> ${CARD_HOLDER}\n` +
-        `📲 <b>Click / Payme orqali:</b> ${SHOP_PHONE}\n\n` +
+        `📲 <b>Click / Payme orqali:</b> <code>${SHOP_PHONE.replace(/[^0-9+]/g, '')}</code>\n\n` +
         `📸 <b>Iltimos, to'lovni amalga oshirgach, to'lov cheki (skrinshot)ni ushbu chatga rasm qilib yuboring!</b>`;
 
       await sendTelegramMessage(chatId, payMessage, getMainKeyboard(chatId));

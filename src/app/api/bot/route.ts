@@ -162,10 +162,10 @@ export async function POST(req: NextRequest) {
           `💳 <b>EVRO DESERT — To'lov ma'lumotlari:</b>\n\n` +
           `🆔 <b>Buyurtma kodi:</b> <code>${displayCode}</code>\n` +
           totalLine +
-          `💳 <b>Karta raqami:</b>\n<code>${CARD_NUMBER}</code>\n` +
-          `<i>(Nusxalash uchun karta raqami ustiga bosing)</i>\n\n` +
+          `💳 <b>Karta raqami (ustiga bosib nusxalang):</b>\n<code>${CARD_NUMBER.replace(/\s+/g, '')}</code>\n` +
+          `<i>(${CARD_NUMBER})</i>\n\n` +
           `👤 <b>Karta egasi:</b> ${CARD_HOLDER}\n` +
-          `📲 <b>Click / Payme orqali:</b> ${SHOP_PHONE}\n\n` +
+          `📲 <b>Click / Payme orqali:</b> <code>${SHOP_PHONE.replace(/[^0-9+]/g, '')}</code>\n\n` +
           `📸 <b>Iltimos, to'lovni amalga oshirgach, to'lov cheki (skrinshot)ni ushbu chatga rasm qilib yuboring!</b>`;
 
         await sendTelegramMessage(chatId, payMessage, getMainKeyboard(chatId));
@@ -920,7 +920,6 @@ export async function POST(req: NextRequest) {
       }
       extraButtons.push([
         { text: '🔄 Holatni yangilash', callback_data: `track_${activeOrder.id}` },
-        { text: '📞 Do\'kon bilan aloqa', url: `tel:${SHOP_PHONE.replace(/[^0-9+]/g, '')}` },
       ]);
 
       await sendTelegramMessage(chatId, statusCard, {

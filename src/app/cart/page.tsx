@@ -5,13 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/hooks/storeHooks";
 import { increaseHandler, minusHandler, deleteHandler, updateCustomText, clearCart } from "@/redux/features/cart/cart";
-import { useToast } from "@/components/ui/use-toast";
-import { FaTrash, FaPlus, FaMinus, FaTelegramPlane, FaCheckCircle, FaShoppingBag, FaArrowLeft, FaGift } from "react-icons/fa";
+import { FaTrash, FaPlus, FaMinus, FaTelegramPlane, FaCheckCircle, FaShoppingBag, FaArrowLeft } from "react-icons/fa";
 
 export default function CartPage() {
   const { cartItems } = useAppSelector((state) => state.cart);
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("+998 ");
@@ -19,7 +17,7 @@ export default function CartPage() {
   const [address, setAddress] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("Bugun (Tezkor)");
   const [deliveryTime, setDeliveryTime] = useState("14:00 - 18:00");
-  const [paymentMethod, setPaymentMethod] = useState("Click / Payme");
+  const [paymentMethod] = useState("Click / Payme");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
@@ -28,12 +26,13 @@ export default function CartPage() {
     total: number;
     customerName: string;
     deliveryType: string;
+    telegramUrl: string;
   } | null>(null);
 
   // Subtotal & Delivery Fee Algorithm
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const FREE_DELIVERY_THRESHOLD = 100000;
-  const STANDARD_DELIVERY_FEE = 15000; // Qo'qon shahar bo'ylab standart yetkazish narxi
+  const STANDARD_DELIVERY_FEE = 15000;
 
   const isFreeDelivery = subtotal >= FREE_DELIVERY_THRESHOLD || deliveryType === "pickup";
   const deliveryFee = subtotal === 0 || isFreeDelivery ? 0 : STANDARD_DELIVERY_FEE;
@@ -46,7 +45,8 @@ export default function CartPage() {
     return price.toLocaleString("uz-UZ") + " so'm";
   };
 
-  const handleTelegramCheckout = async () => {
+  const handleTelegramCheckout = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setFormError("");
     if (cartItems.length === 0) return;
 
@@ -145,77 +145,29 @@ export default function CartPage() {
       total,
       customerName: customerName.trim(),
       deliveryType,
+      telegramUrl: tgUrl,
     });
     dispatch(clearCart());
     setIsSuccess(true);
   };
 
-  const handleOrderSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cartItems.length === 0) return;
-
-    if (!customerName || customerPhone.length < 9) {
-      setFormError("Iltimos, ismingiz va telefon raqamingizni to'liq kiriting!");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await fetch('/api/Order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: customerName,
-          phone: customerPhone,
-          items: cartItems,
-          subtotal,
-          deliveryFee,
-          total,
-          deliveryType,
-          address,
-          date: `${deliveryDate} ${deliveryTime}`,
-          paymentMethod,
-        }),
-      });
-      setCompletedOrder({
-        itemsCount: cartItems.reduce((acc, i) => acc + i.quantity, 0),
-        total,
-        customerName: customerName.trim(),
-        deliveryType,
-      });
-      dispatch(clearCart());
-      setIsSuccess(true);
-    } catch {
-      setCompletedOrder({
-        itemsCount: cartItems.reduce((acc, i) => acc + i.quantity, 0),
-        total,
-        customerName: customerName.trim(),
-        deliveryType,
-      });
-      dispatch(clearCart());
-      setIsSuccess(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   if (isSuccess) {
     return (
-      <main className="min-h-[75vh] flex items-center justify-center py-16 px-4 bg-[#FAF8F5]">
-        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-[#EFE7E2] shadow-xl max-w-lg w-full text-center space-y-6">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-sm">
+      <main className="min-h-[75vh] flex items-center justify-center py-10 sm:py-16 px-4 bg-[#FAF8F5]">
+        <div className="bg-white p-6 sm:p-12 rounded-3xl border border-[#EFE7E2] shadow-xl max-w-lg w-full text-center space-y-5 sm:space-y-6">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl sm:text-4xl shadow-sm">
             <FaCheckCircle />
           </div>
           <div>
             <h1 className="font-luxury text-2xl sm:text-3xl font-bold text-[#2E1D1A]">
               Buyurtmangiz Qabul Qilindi! 🎉
             </h1>
-            <p className="text-sm text-[#6E5550] leading-relaxed mt-2">
-              Rahmat{completedOrder?.customerName || customerName ? `, ${completedOrder?.customerName || customerName}` : ""}! Qandolatchi mutaxassisimiz buyurtma tafsilotlarini tasdiqlash uchun tez orada siz bilan bog&apos;lanadi.
+            <p className="text-xs sm:text-sm text-[#6E5550] leading-relaxed mt-2">
+              Rahmat{completedOrder?.customerName || customerName ? `, ${completedOrder?.customerName || customerName}` : ""}! Buyurtmangiz Telegram botga uzatildi. Botda <b>To&apos;lov qilish</b> tugmasini bosib, chekni yuklang.
             </p>
           </div>
 
-          <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EFE7E2] text-sm text-left space-y-2">
+          <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EFE7E2] text-xs sm:text-sm text-left space-y-2">
             <div className="flex justify-between text-gray-600">
               <span>Mahsulotlar soni:</span>
               <span className="font-semibold">{completedOrder?.itemsCount || 1} dona</span>
@@ -232,12 +184,12 @@ export default function CartPage() {
             </div>
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="pt-2 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-center">
             <a
-              href="https://t.me/evro_desert86bot"
+              href={completedOrder?.telegramUrl || "https://t.me/evro_desert86bot"}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1E88E5] text-white font-semibold px-6 py-3 rounded-full transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1E88E5] text-white font-bold px-6 py-3.5 rounded-full active:scale-95 transition text-sm shadow-md shadow-sky-200"
             >
               <FaTelegramPlane />
               <span>Telegram botda ochish</span>
@@ -245,7 +197,7 @@ export default function CartPage() {
             <Link
               href="/product"
               onClick={() => dispatch(clearCart())}
-              className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold px-6 py-3 rounded-full shadow-md shadow-rose-200 transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold px-6 py-3.5 rounded-full shadow-md shadow-rose-200 active:scale-95 transition text-sm"
             >
               <span>Katalogga qaytish</span>
             </Link>
@@ -256,13 +208,13 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen py-10 bg-[#FAF8F5]">
+    <main className="min-h-screen py-6 sm:py-10 bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header */}
-        <div className="flex items-center justify-between pb-6 mb-8 border-b border-[#EFE7E2]">
-          <div className="space-y-1">
-            <h1 className="font-luxury text-2xl sm:text-4xl font-extrabold text-[#2E1D1A]">
+        {/* Header — Back button visible on both Mobile and Desktop */}
+        <div className="flex items-center justify-between gap-3 pb-5 sm:pb-6 mb-6 sm:mb-8 border-b border-[#EFE7E2]">
+          <div className="space-y-0.5 sm:space-y-1">
+            <h1 className="font-luxury text-xl sm:text-4xl font-extrabold text-[#2E1D1A]">
               Sizning Savatchangiz 🛍️
             </h1>
             <p className="text-xs sm:text-sm text-[#7A635E]">
@@ -272,22 +224,22 @@ export default function CartPage() {
 
           <Link
             href="/product"
-            className="hidden sm:inline-flex items-center gap-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-4 py-2 rounded-full transition"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full active:scale-95 transition flex-shrink-0"
           >
-            <FaArrowLeft className="text-xs" />
-            <span>Katalogga qaytish</span>
+            <FaArrowLeft className="text-[10px]" />
+            <span>Katalog</span>
           </Link>
         </div>
 
         {cartItems.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
             
             {/* Left Cart Items List */}
-            <div className="lg:col-span-7 space-y-4">
+            <div className="lg:col-span-7 space-y-3.5 sm:space-y-4">
 
               {/* Free Delivery Gamified Progress Bar */}
-              <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold">
+              <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
+                <div className="flex items-center justify-between gap-2 text-xs font-semibold">
                   {freeDeliveryRemaining > 0 ? (
                     <span className="text-[#6E5550]">
                       Yana <strong className="text-rose-600 font-bold">{formatPrice(freeDeliveryRemaining)}</strong> xarid qiling va Qo&apos;qon bo&apos;ylab yetkazish <strong className="text-emerald-700">BEPUL</strong> bo&apos;ladi!
@@ -297,11 +249,11 @@ export default function CartPage() {
                       🎉 Tabriklaymiz! Sizga Qo&apos;qon shahrida yetkazib berish BEPUL!
                     </span>
                   )}
-                  <span className="text-rose-600 font-bold">{freeDeliveryPercent}%</span>
+                  <span className="text-rose-600 font-bold flex-shrink-0">{freeDeliveryPercent}%</span>
                 </div>
-                <div className="w-full bg-rose-100 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-rose-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-rose-500 to-pink-500 h-2.5 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-rose-500 to-pink-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${freeDeliveryPercent}%` }}
                   />
                 </div>
@@ -311,12 +263,12 @@ export default function CartPage() {
               {cartItems.map((item, index) => (
                 <div
                   key={item.cartItemId || `${item.name}-${item.weight}-${index}`}
-                  className="bg-white p-4 sm:p-5 rounded-2xl border border-[#EFE7E2] shadow-sm flex flex-col gap-3 transition-all hover:border-rose-200"
+                  className="bg-white p-3.5 sm:p-5 rounded-2xl border border-[#EFE7E2] shadow-sm flex flex-col gap-3 transition-all hover:border-rose-200"
                 >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                     {/* Photo & Info */}
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                    <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
                         <Image
                           src={item.image}
                           alt={item.name}
@@ -324,8 +276,8 @@ export default function CartPage() {
                           className="object-cover"
                         />
                       </div>
-                      <div>
-                        <h3 className="font-luxury font-bold text-base sm:text-lg text-[#2E1D1A]">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-luxury font-bold text-base sm:text-lg text-[#2E1D1A] truncate">
                           {item.name}
                         </h3>
                         {item.weight && (
@@ -334,23 +286,23 @@ export default function CartPage() {
                           </span>
                         )}
                         {item.filling && (
-                          <span className="text-xs text-rose-700 block font-medium">
+                          <span className="text-xs text-rose-700 block font-medium truncate">
                             🍓 Nachinka: {item.filling}
                           </span>
                         )}
-                        <span className="text-sm font-bold text-rose-600 mt-1 block">
+                        <span className="text-xs sm:text-sm font-bold text-rose-600 mt-0.5 block">
                           {formatPrice(item.price)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Quantity & Delete */}
-                    <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-gray-100">
+                    {/* Quantity & Delete — Touch-friendly 36px buttons on mobile */}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-0 border-gray-100">
                       <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-[#FAF8F5]">
                         <button
                           type="button"
                           onClick={() => dispatch(minusHandler({ cartItemId: item.cartItemId, name: item.name, weight: item.weight }))}
-                          className="p-2 text-gray-600 hover:text-rose-600 hover:bg-white transition"
+                          className="w-9 h-9 flex items-center justify-center text-gray-600 active:bg-white hover:text-rose-600 transition"
                           title="Kamaytirish"
                         >
                           <FaMinus className="text-xs" />
@@ -361,7 +313,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => dispatch(increaseHandler({ cartItemId: item.cartItemId, name: item.name, weight: item.weight }))}
-                          className="p-2 text-gray-600 hover:text-rose-600 hover:bg-white transition"
+                          className="w-9 h-9 flex items-center justify-center text-gray-600 active:bg-white hover:text-rose-600 transition"
                           title="Ko'paytirish"
                         >
                           <FaPlus className="text-xs" />
@@ -377,10 +329,10 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => dispatch(deleteHandler({ cartItemId: item.cartItemId, name: item.name, weight: item.weight }))}
-                        className="p-2 text-gray-400 hover:text-red-600 transition"
+                        className="w-9 h-9 rounded-xl bg-red-50/70 text-red-500 hover:bg-red-100 hover:text-red-600 flex items-center justify-center active:scale-95 transition"
                         title="O'chirish"
                       >
-                        <FaTrash className="text-sm" />
+                        <FaTrash className="text-xs" />
                       </button>
                     </div>
                   </div>
@@ -389,7 +341,7 @@ export default function CartPage() {
                   {item.customizable && (
                     <div className="pt-2 border-t border-gray-100">
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">
-                        ✍️ Tort ustiga yoziladigan matn:
+                        ✍️ Tort ustiga yoziladigan matn (bepul):
                       </label>
                       <input
                         type="text"
@@ -404,7 +356,7 @@ export default function CartPage() {
                             })
                           )
                         }
-                        className="w-full bg-[#FAF8F5] border border-gray-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-rose-400 focus:bg-white transition"
+                        className="w-full bg-[#FAF8F5] border border-gray-200 text-base sm:text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-rose-400 focus:bg-white transition"
                       />
                     </div>
                   )}
@@ -413,8 +365,8 @@ export default function CartPage() {
               ))}
 
               {/* Free Gifts Banner */}
-              <div className="p-4 bg-amber-50/70 rounded-2xl border border-amber-200 flex items-center gap-3 text-xs text-amber-900">
-                <span className="text-2xl">🎁</span>
+              <div className="p-3.5 sm:p-4 bg-amber-50/70 rounded-2xl border border-amber-200 flex items-center gap-3 text-xs text-amber-900">
+                <span className="text-2xl flex-shrink-0">🎁</span>
                 <div>
                   <strong className="font-bold text-amber-950">Har bir buyurtmaga bepul qo&apos;shiladi:</strong>
                   <div className="text-amber-800 mt-0.5">
@@ -426,24 +378,24 @@ export default function CartPage() {
             </div>
 
             {/* Right Order & Checkout Box */}
-            <div className="lg:col-span-5">
-              <div className="bg-white p-6 rounded-3xl border border-[#EFE7E2] shadow-sm space-y-5">
+            <div className="lg:col-span-5" id="checkout-form">
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#EFE7E2] shadow-sm space-y-4 sm:space-y-5">
                 
                 <h2 className="font-luxury text-xl font-bold text-[#2E1D1A] pb-3 border-b border-[#EFE7E2]">
                   Buyurtmani Rasmiylashtirish
                 </h2>
 
                 {/* Price Breakdown */}
-                <div className="space-y-2.5 text-sm">
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-[#6E5550]">
                     <span>Mahsulotlar summasi:</span>
                     <span className="font-semibold text-[#2E1D1A]">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-[#6E5550]">
-                    <span>Yetkazib berish (Dostavka):</span>
+                    <span>Yetkazib berish:</span>
                     <span>
                       {deliveryFee === 0 ? (
-                        <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-xs">
                           BEPUL 🎉
                         </span>
                       ) : (
@@ -458,7 +410,7 @@ export default function CartPage() {
                 </div>
 
                 {/* Checkout Inputs */}
-                <form onSubmit={handleOrderSubmit} className="space-y-4 pt-2">
+                <form onSubmit={handleTelegramCheckout} className="space-y-3.5 sm:space-y-4 pt-1">
                   {formError && (
                     <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
                       ⚠️ {formError}
@@ -472,10 +424,11 @@ export default function CartPage() {
                     <input
                       type="text"
                       required
+                      autoComplete="name"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Ismingizni kiriting"
-                      className="w-full bg-[#FAF8F5] border border-gray-200 text-sm rounded-xl px-4 py-2.5 focus:border-rose-500 focus:bg-white outline-none"
+                      className="w-full bg-[#FAF8F5] border border-gray-200 text-base sm:text-sm rounded-xl px-4 py-3 focus:border-rose-500 focus:bg-white outline-none"
                     />
                   </div>
 
@@ -485,11 +438,13 @@ export default function CartPage() {
                     </label>
                     <input
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="+998 90 123 45 67"
-                      className="w-full bg-[#FAF8F5] border border-gray-200 text-sm rounded-xl px-4 py-2.5 focus:border-rose-500 focus:bg-white outline-none font-medium"
+                      className="w-full bg-[#FAF8F5] border border-gray-200 text-base sm:text-sm rounded-xl px-4 py-3 focus:border-rose-500 focus:bg-white outline-none font-medium"
                     />
                   </div>
 
@@ -498,10 +453,10 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => setDeliveryType('delivery')}
-                      className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                      className={`py-3 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition ${
                         deliveryType === 'delivery'
-                          ? "bg-rose-50 border-rose-600 text-rose-700 shadow-sm"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                          ? "bg-rose-50 border-rose-600 text-rose-700 shadow-sm ring-1 ring-rose-300"
+                          : "bg-white border-gray-200 text-gray-600"
                       }`}
                     >
                       <span>🚚 Yetkazib berish</span>
@@ -509,36 +464,41 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => setDeliveryType('pickup')}
-                      className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                      className={`py-3 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition ${
                         deliveryType === 'pickup'
-                          ? "bg-rose-50 border-rose-600 text-rose-700 shadow-sm"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                          ? "bg-rose-50 border-rose-600 text-rose-700 shadow-sm ring-1 ring-rose-300"
+                          : "bg-white border-gray-200 text-gray-600"
                       }`}
                     >
-                      <span>🏬 O&apos;zim olib ketaman</span>
+                      <span>🏬 Olib ketish</span>
                     </button>
                   </div>
 
                   {deliveryType === 'delivery' && (
                     <div>
+                      <label className="block text-xs font-bold text-[#5C4540] uppercase tracking-wider mb-1">
+                        Manzilingiz*
+                      </label>
                       <input
                         type="text"
+                        required
+                        autoComplete="street-address"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Qo'qon shahar, ko'cha, uy/kvartira raqami"
-                        className="w-full bg-[#FAF8F5] border border-gray-200 text-sm rounded-xl px-4 py-2.5 focus:border-rose-500 focus:bg-white outline-none"
+                        placeholder="Qo'qon shahar, ko'cha, uy raqami"
+                        className="w-full bg-[#FAF8F5] border border-gray-200 text-base sm:text-sm rounded-xl px-4 py-3 focus:border-rose-500 focus:bg-white outline-none"
                       />
                     </div>
                   )}
 
                   {/* Date & Time */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
                     <div>
                       <label className="block font-bold text-[#5C4540] mb-1">Sana:</label>
                       <select
                         value={deliveryDate}
                         onChange={(e) => setDeliveryDate(e.target.value)}
-                        className="w-full bg-[#FAF8F5] border border-gray-200 rounded-xl p-2 outline-none text-xs"
+                        className="w-full bg-[#FAF8F5] border border-gray-200 rounded-xl px-3 py-2.5 outline-none text-base sm:text-xs font-medium"
                       >
                         <option value="Bugun (Tezkor)">Bugun (Tezkor)</option>
                         <option value="Ertaga">Ertaga</option>
@@ -551,7 +511,7 @@ export default function CartPage() {
                       <select
                         value={deliveryTime}
                         onChange={(e) => setDeliveryTime(e.target.value)}
-                        className="w-full bg-[#FAF8F5] border border-gray-200 rounded-xl p-2 outline-none text-xs"
+                        className="w-full bg-[#FAF8F5] border border-gray-200 rounded-xl px-3 py-2.5 outline-none text-base sm:text-xs font-medium"
                       >
                         <option value="10:00 - 13:00">10:00 - 13:00</option>
                         <option value="14:00 - 18:00">14:00 - 18:00</option>
@@ -563,10 +523,9 @@ export default function CartPage() {
                   {/* Submit Action */}
                   <div className="pt-2">
                     <button
-                      type="button"
-                      onClick={handleTelegramCheckout}
+                      type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 active:scale-[0.98] text-white font-extrabold py-4 px-5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition-all text-sm disabled:opacity-50"
+                      className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 active:scale-[0.98] text-white font-extrabold py-4 px-5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition-all text-sm sm:text-base disabled:opacity-50"
                     >
                       <FaCheckCircle className="text-base" />
                       <span>{isSubmitting ? "Tayyorlanmoqda..." : `Buyurtmani tasdiqlash (${formatPrice(total)})`}</span>
@@ -582,20 +541,20 @@ export default function CartPage() {
 
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-12 text-center border border-[#EFE7E2] max-w-md mx-auto space-y-5">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-[#EFE7E2] max-w-md mx-auto space-y-5">
             <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto text-3xl">
               <FaShoppingBag />
             </div>
             <h2 className="font-luxury text-2xl font-bold text-[#2E1D1A]">
               Savatchangiz hozircha bo&apos;sh
             </h2>
-            <p className="text-sm text-[#7A635E] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#7A635E] leading-relaxed">
               Katalogimizdan o&apos;zingizga yoqqan lazzatli tort yoki shirinliklarni tanlab, savatga qo&apos;shing!
             </p>
             <div>
               <Link
                 href="/product"
-                className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3.5 rounded-full shadow-lg shadow-rose-200 transition"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3.5 rounded-full shadow-lg shadow-rose-200 active:scale-95 transition text-sm"
               >
                 <span>Tortlar Katalogiga O&apos;tish</span>
                 <span>🎂</span>
